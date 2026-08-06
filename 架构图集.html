@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>塞上法桥 · 架构图集</title>
+<script src="mermaid.min.js"></script>
+<style>
+  :root{
+    --ink:#1f2430; --sub:#6b7280; --line:#e5e7eb; --card:#ffffff;
+    --accent:#3b5bdb; --accent-soft:#eef2ff; --bg:#f4f5f7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+       font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;}
+  header{background:linear-gradient(135deg,#2b3a67 0%,#3b5bdb 100%); color:#fff;
+         padding:32px 24px 28px; }
+  header h1{margin:0 0 6px; font-size:26px; letter-spacing:1px;}
+  header p{margin:0; opacity:.85; font-size:14px; line-height:1.7;}
+  main{max-width:1180px; margin:0 auto; padding:24px 16px 80px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px;
+        margin:20px 0; box-shadow:0 1px 3px rgba(16,24,40,.06); overflow:hidden;}
+  .card-head{display:flex; align-items:center; justify-content:space-between; gap:12px;
+             padding:14px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .card-head h2{margin:0; font-size:17px; display:flex; align-items:center; gap:10px;}
+  .badge{display:inline-flex; align-items:center; justify-content:center;
+         background:var(--accent-soft); color:var(--accent); font-weight:700;
+         width:28px; height:28px; border-radius:8px; font-size:14px;}
+  .card-head .desc{font-size:12.5px; color:var(--sub); width:100%; margin-top:4px;}
+  .btns{display:flex; gap:8px;}
+  .btns button{border:1px solid var(--accent); background:#fff; color:var(--accent);
+               padding:6px 14px; border-radius:8px; font-size:13px; cursor:pointer;
+               transition:all .15s;}
+  .btns button:hover{background:var(--accent); color:#fff;}
+  .diagram{padding:24px; overflow-x:auto; text-align:center; min-height:120px;}
+  .diagram svg{max-width:100%; height:auto;}
+  footer{max-width:1180px; margin:0 auto; padding:0 16px 40px; color:var(--sub); font-size:12.5px; line-height:1.8;}
+  footer code{background:#eef0f3; padding:1px 6px; border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚖️ 塞上法桥 · 架构图集</h1>
+  <p>《塞上法桥-可行技术方案.md》中全部架构图的浏览器渲染版 —— 每张图可单独导出 PNG / SVG，可直接放入 PPT、申报书与开发文档。<br>
+  如需修改内容，请编辑同目录 Markdown 中的 Mermaid 代码块后刷新本页。</p>
+</header>
+
+<main>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><span class="badge">0</span>核心业务闭环（总览）</h2>
+      <div class="btns">
+        <button onclick="exportPNG('d-loop')">导出 PNG</button>
+        <button onclick="exportSVG('d-loop')">导出 SVG</button>
+      </div>
+      <div class="desc">语音采集 → 案情结构化 → Agent Swarm 研判 → 律师背书 → 树状方案 → 数据反哺</div>
+    </div>
+    <div class="diagram" id="d-loop"><pre class="mermaid">
+flowchart LR
+    A["用户自然叙述<br/>语音输入"] --> B["语音采集引擎<br/>要件追问 · 情绪剥离 · 证据收集"]
+    B --> C["结构化案情卡<br/>事实 + 证据链 + 不确定度"]
+    C --> D["Agent Swarm<br/>主 Agent 拆解 → 子 Agent 研判 → 黑板协同"]
+    D --> E["一致性校验 + 意见书合成<br/>树状可执行方案"]
+    E --> F{"免费 or 付费？"}
+    F -->|"免费路径"| G["基础指引<br/>标注「未经律师审核」"]
+    F -->|"付费路径"| H["律师复核背书<br/>智能分派 · 待复核点高亮 · 修改留痕"]
+    G --> I["用户执行 · 按图索骥 · 语音追问"]
+    H --> I
+    I -.->|"满意度 · 留存 · 执行反馈"| J["数据反哺<br/>Agent 测试集 · 审核质量看板"]
+    J -.-> D
+    </pre></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><span class="badge">1</span>总体分层架构</h2>
+      <div class="btns">
+        <button onclick="exportPNG('d-arch')">导出 PNG</button>
+        <button onclick="exportSVG('d-arch')">导出 SVG</button>
+      </div>
+      <div class="desc">客户端层 / 接入层 / 业务核心层 / 数据层 / 基础设施层</div>
+    </div>
+    <div class="diagram" id="d-arch"><pre class="mermaid">
+flowchart TB
+    subgraph L1["① 客户端层"]
+        A1["用户端<br/>H5 / 微信小程序 / App"]
+        A2["律师端<br/>Web 工作台"]
+        A3["管理后台"]
+    end
+    subgraph L2["② 接入层"]
+        B1["API 网关<br/>鉴权 · 限流 · 额度校验 · 风控前置 · 链路追踪"]
+    end
+    subgraph L3["③ 业务核心层"]
+        subgraph C1["语音案情采集引擎"]
+            C11["实时 ASR 转写 · 语义纠错"]
+            C12["要件追问状态机"]
+            C13["证据采集 OCR"]
+        end
+        subgraph C2["Agent Swarm 编排引擎"]
+            C21["主 Agent<br/>拆解 · 调度 · 校验 · 合成"]
+            C22["子 Agent 池<br/>法律人格 + 技能包 + 输出范式"]
+            C23["黑板<br/>共享事实库 + 子结论"]
+        end
+        subgraph C3["意见书合成"]
+            C31["一致性校验器"]
+            C32["树状方案合成器"]
+        end
+        subgraph C4["律师审核闭环"]
+            C41["智能分派"]
+            C42["复核工作台 · 背书留痕"]
+        end
+        C5["双端业务服务 · 计费结算"]
+    end
+    subgraph L4["④ 数据层"]
+        D1["用户库 · 案件库"]
+        D2["证据库（加密）"]
+        D3["子 Agent 配置库"]
+        D4["律师库 · 审核审计链"]
+        D5["法条 / 类案 / 模板知识库（RAG）"]
+        D6["事件流 · 案件进度"]
+    end
+    subgraph L5["⑤ 基础设施层"]
+        E1["对象存储 · 向量库 · 消息队列"]
+        E2["任务调度 · 监控告警 · 模型网关"]
+    end
+    A1 & A2 & A3 --> B1
+    B1 --> C1 & C2 & C3 & C4 & C5
+    C1 --> C2 --> C3 --> C4
+    C1 --> D2
+    C2 --> D3
+    C3 --> D5
+    C5 --> D1 & D4 & D6
+    C5 --> E1 & E2
+    D5 --> E1
+    </pre></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><span class="badge">2</span>语音案情采集 · 状态机</h2>
+      <div class="btns">
+        <button onclick="exportPNG('d-state')">导出 PNG</button>
+        <button onclick="exportSVG('d-state')">导出 SVG</button>
+      </div>
+      <div class="desc">“前台实习律师”接待流程：全程可打断、可补充，证据采集与追问并行</div>
+    </div>
+    <div class="diagram" id="d-state"><pre class="mermaid">
+stateDiagram-v2
+    [*] --> 开场引导: 用户进入咨询
+    开场引导 --> 自由陈述: 自然叙述
+    自由陈述 --> 意图分类: 转写完成
+    意图分类 --> 要件追问循环: 加载要件清单
+    要件追问循环 --> 证据采集: 用户上传材料（异步并行，不打断）
+    证据采集 --> 要件追问循环: 已接收，继续追问
+    要件追问循环 --> 案情确认: 关键要件齐备
+    要件追问循环 --> 案情确认: 无法补充，标记未知项
+    案情确认 --> [*]: 确认后进入 Agent Swarm
+    自由陈述 --> 自由陈述: 随时补充新事实
+    note right of 要件追问循环: 每次只问 1~2 个最关键问题<br/>全程可打断、可补充
+    </pre></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><span class="badge">3</span>Agent Swarm 编排引擎（核心）</h2>
+      <div class="btns">
+        <button onclick="exportPNG('d-swarm')">导出 PNG</button>
+        <button onclick="exportSVG('d-swarm')">导出 SVG</button>
+      </div>
+      <div class="desc">主 Agent 拆解 → 黑板协同 → 子 Agent 研判 → 一致性校验 → 意见书合成 → 律师复核</div>
+    </div>
+    <div class="diagram" id="d-swarm"><pre class="mermaid">
+flowchart TB
+    M["主 Agent（主任律师）<br/>拆解 → 调度 → 校验 → 合成"]
+    M -->|"拆解为子任务（DAG）"| B["黑板（共享事实库 + 子结论）<br/>引用而非复制 · 省 token"]
+    B --> SA["子 Agent A<br/>合同审查律师<br/>人格 · 思维链 · 技能包 · 输出范式"]
+    B --> SB["子 Agent B<br/>劳动权益律师"]
+    B --> SC["子 Agent C<br/>程序 / 管辖律师"]
+    SA -->|"写入结论"| B
+    SB -->|"写入结论"| B
+    SC -->|"写入结论"| B
+    B --> CHK["一致性校验器<br/>结论矛盾 · 法条失效 · 计算错误"]
+    CHK -->|"退回修正"| SA
+    CHK -->|"退回修正"| SB
+    CHK -->|"退回修正"| SC
+    CHK -->|"无法消解 → 标注分歧"| SYN["意见书合成器<br/>树状可执行方案"]
+    SYN --> LR["律师复核工作台<br/>（人工介入节点）"]
+    subgraph KB["知识基座（技能包）"]
+        K1[("法条库")]
+        K2[("类案库")]
+        K3[("文书模板库")]
+        K4[("计算器")]
+    end
+    SA --> KB
+    SB --> KB
+    SC --> KB
+    </pre></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><span class="badge">4</span>律师审核与背书闭环</h2>
+      <div class="btns">
+        <button onclick="exportPNG('d-audit')">导出 PNG</button>
+        <button onclick="exportSVG('d-audit')">导出 SVG</button>
+      </div>
+      <div class="desc">AI 交付完整上下文 → 智能分派 → 复核/背书 → 用户端更新 → 结算，修改 diff 反哺 Agent</div>
+    </div>
+    <div class="diagram" id="d-audit"><pre class="mermaid">
+flowchart LR
+    A["AI 意见书 + 完整上下文<br/>原话转写 · 案情卡 · 推理回放 · 待复核点"] --> B["智能分派<br/>领域匹配 · 负载 · 质量 · 时效"]
+    B --> C["律师复核工作台<br/>diff 修改 · 证据链视图 · 工具速查"]
+    C -->|"修改"| D["审改留痕<br/>diff 追踪 → 反哺 Agent 迭代"]
+    C -->|"背书"| E["律师署名背书"]
+    D --> E
+    E --> F["用户端实时更新<br/>「已审核」状态"]
+    E --> G["收益结算<br/>按件 · 订阅分成 · 案源佣金"]
+    D -.->|"回写测试集"| H[("Agent 测试集")]
+    </pre></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><span class="badge">5</span>实施路线 · 时间线</h2>
+      <div class="btns">
+        <button onclick="exportPNG('d-roadmap')">导出 PNG</button>
+        <button onclick="exportSVG('d-roadmap')">导出 SVG</button>
+      </div>
+      <div class="desc">概念验证 → MVP → Swarm 与 Agent Builder → 商业化与生态（各阶段含验收指标）</div>
+    </div>
+    <div class="diagram" id="d-roadmap"><pre class="mermaid">
+timeline
+    title 塞上法桥 · 实施路线（4 阶段）
+    Phase 0 概念验证 : 3~4 周 : 语音转写 + 要件追问 demo : 验收：要件覆盖率 ≥ 80%
+    Phase 1 MVP : 10~12 周 : 全流程采集 + 10~15 个场景子 Agent : 验收：一次通过率 ≥ 50%
+    Phase 2 Swarm 与 Builder : 8~10 周 : 黑板 + 一致性校验 + DAG : 验收：一次通过率 ≥ 65%
+    Phase 3 商业化与生态 : 8~12 周 : 计费 / 订阅 / 广告 / 智能分派 : 验收：付费转化 ≥ 5%
+    </pre></div>
+  </div>
+
+</main>
+
+<footer>
+  <p>📌 使用说明</p>
+  <p>1. 打开方式：双击本文件即可在浏览器查看（需 <code>mermaid.min.js</code> 与本文档同目录；若缺失会自动回退到 CDN）。</p>
+  <p>2. 导出图片：点击每张图右上角的「导出 PNG / SVG」，可直接插入 PPT / Word / 申报书。</p>
+  <p>3. 修改图：所有图均来自 <code>塞上法桥-可行技术方案.md</code> 中的 Mermaid 代码块，改文档后刷新本页即可同步。</p>
+</footer>
+
+<script>
+  function svgOf(id){
+    const el = document.getElementById(id);
+    return el ? el.querySelector('svg') : null;
+  }
+  function download(blob, name){
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+  function exportSVG(id){
+    const svg = svgOf(id);
+    if(!svg){ alert('图表尚未渲染完成，请稍后再试'); return; }
+    const data = new XMLSerializer().serializeToString(svg);
+    download(new Blob([data], {type:'image/svg+xml;charset=utf-8'}), id + '.svg');
+  }
+  function exportPNG(id, scale){
+    scale = scale || 2;
+    const svg = svgOf(id);
+    if(!svg){ alert('图表尚未渲染完成，请稍后再试'); return; }
+    const data = new XMLSerializer().serializeToString(svg);
+    const url = URL.createObjectURL(new Blob([data], {type:'image/svg+xml;charset=utf-8'}));
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function(b){ download(b, id + '.png'); });
+    };
+    img.src = url;
+  }
+
+  /* 渲染失败时显示可读错误信息 */
+  document.addEventListener('DOMContentLoaded', function(){
+    if (typeof mermaid === 'undefined') {
+      document.querySelectorAll('.diagram').forEach(function(d){
+        d.innerHTML = '<p style="color:#dc2626">⚠️ 未加载到 mermaid.min.js，请确认它与本文件在同一目录（或联网后刷新）。</p>';
+      });
+      return;
+    }
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { useMaxWidth: true, htmlLabels: true } });
+  });
+</script>
+</body>
+</html>
