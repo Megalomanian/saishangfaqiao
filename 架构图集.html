@@ -55,15 +55,31 @@
         <button onclick="exportPNG('d-arch')">导出 PNG</button>
         <button onclick="exportSVG('d-arch')">导出 SVG</button>
       </div>
-      <div class="desc">一个后端单体服务 + 3 个外部 API + 1 个数据库 —— 没有微服务、消息队列、向量库、Agent 框架</div>
+      <div class="desc">三层架构：用户层（Web）→ 应用层（FastAPI 单体）→ 支撑层（数据库 + 外部 API）——没有微服务、消息队列、向量库、Agent 框架</div>
     </div>
     <div class="diagram" id="d-arch"><pre class="mermaid">
 flowchart TB
-    U["用户（手机 H5）<br/>语音 / 文字 · 证据图片"] --> S["后端单体服务（FastAPI）<br/>转写 · 要件追问 · 方案生成 · 审核流转"]
-    S --> API["外部 API<br/>LLM · ASR · OCR（各选 1 家）"]
-    S <--> DB[("PostgreSQL 单库<br/>用户 / 案件 / 证据 / 方案")]
-    S --> L["律师工作台<br/>网页复核 · 修改留痕"]
-    S -->|"树状方案 · 已审核"| U
+    subgraph L1["用户层 · 纯 Web（浏览器）"]
+        A["用户端 H5<br/>语音 / 文字 · 证据图片 · 查看方案"]
+        B["律师工作台<br/>复核 · 修改 · 背书"]
+    end
+    subgraph L2["应用层 · 单体服务"]
+        C["FastAPI<br/>语音转写 · 要件追问 · 方案生成 · 审核流转"]
+    end
+    subgraph L3["支撑层"]
+        D[("PostgreSQL 单库<br/>用户 / 案件 / 证据 / 方案")]
+        E["外部 API<br/>LLM · ASR · OCR"]
+    end
+    A --> C
+    B --> C
+    C --> D
+    C --> E
+    classDef l1 fill:#eef2ff,stroke:#3b5bdb,stroke-width:1.5px,color:#1e293b
+    classDef l2 fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#1e293b
+    classDef l3 fill:#fff7ed,stroke:#ea580c,stroke-width:1.5px,color:#1e293b
+    class A,B l1
+    class C l2
+    class D,E l3
     </pre></div>
   </div>
 

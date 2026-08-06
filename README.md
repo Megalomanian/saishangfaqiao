@@ -42,16 +42,34 @@
 
 ---
 
-## 1. 总体架构（一张图）
+## 1. 总体架构（分层，一张图）
 
 ```mermaid
 flowchart TB
-    U["用户（手机 H5）<br/>语音 / 文字 · 证据图片"] --> S["后端单体服务（FastAPI）<br/>转写 · 要件追问 · 方案生成 · 审核流转"]
-    S --> API["外部 API<br/>LLM · ASR · OCR（各选 1 家）"]
-    S <--> DB[("PostgreSQL 单库<br/>用户 / 案件 / 证据 / 方案")]
-    S --> L["律师工作台<br/>网页复核 · 修改留痕"]
-    S -->|"树状方案 · 已审核"| U
+    subgraph L1["用户层 · 纯 Web（浏览器）"]
+        A["用户端 H5<br/>语音 / 文字 · 证据图片 · 查看方案"]
+        B["律师工作台<br/>复核 · 修改 · 背书"]
+    end
+    subgraph L2["应用层 · 单体服务"]
+        C["FastAPI<br/>语音转写 · 要件追问 · 方案生成 · 审核流转"]
+    end
+    subgraph L3["支撑层"]
+        D[("PostgreSQL 单库<br/>用户 / 案件 / 证据 / 方案")]
+        E["外部 API<br/>LLM · ASR · OCR"]
+    end
+    A --> C
+    B --> C
+    C --> D
+    C --> E
+    classDef l1 fill:#eef2ff,stroke:#3b5bdb,stroke-width:1.5px,color:#1e293b
+    classDef l2 fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#1e293b
+    classDef l3 fill:#fff7ed,stroke:#ea580c,stroke-width:1.5px,color:#1e293b
+    class A,B l1
+    class C l2
+    class D,E l3
 ```
+
+> 箭头为请求方向；方案下发与状态回传的完整环路见[第 3 节核心流程](#3-核心流程一次咨询怎么走完)。
 
 **核心思想：一个后端服务 + 3 个外部 API + 1 个数据库。** 没有微服务、没有消息队列、没有向量库、没有 Agent 框架。所有"智能"来自调用大模型 API，我们的工作主要是：设计追问逻辑、写提示词、做审核闭环。
 
